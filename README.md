@@ -7,7 +7,12 @@
 
 <br>
 
-## excelarchive.py
+## 0. requirments.txt
+필요한 패키지를 한 번에 install 할 수 있도록 requirments.txt에 담아두었습니다.
+
+<br>
+
+## 1. excelarchive.py
 기능 : 원하는 공개 및 비공개 채널(public & private channel)의 모든 메세지 내용을 불러와 엑셀 파일로 저장할 수 있습니다.
 
 설정 사항 : 자사 Slack APP 토큰을 환경 변수로 설정하고, 토큰의 권한 설정을 마치면(Slack API 메소드 참고) 누구나 이용하실 수 있습니다.
@@ -22,7 +27,7 @@
 
 <br>
 
-## memoir_app.py(미완 - 제작중)
+## 2. memoir_app.py(미완 - 제작중)
 기능 : Slack에서 특정 이벤트를 인지하고 받아와 원하는 답을 해주는 챗봇입니다.
 
 <br>
