@@ -5,6 +5,8 @@
 
 ※ 슬랙 API 메소드를 사용하여 제작 : https://api.slack.com/methods
 
+<br>
+
 ## excelarchive.py
 기능 : 원하는 공개 및 비공개 채널(public & private channel)의 모든 메세지 내용을 불러와 엑셀 파일로 저장할 수 있습니다.
 
@@ -18,8 +20,12 @@
 
 ※ 메모어 서비스 특성상, 기간 중 소속된 채널의 멤버가 작성한 reply 횟수를 집계한 엑셀 파일도 함께 생성합니다.
 
+<br>
+
 ## memoir_app.py(미완 - 제작중)
 기능 : Slack에서 특정 이벤트를 인지하고 받아와 원하는 답을 해주는 챗봇입니다.
+
+<br>
 
 -------
 작성 및 제작자 : 이강희(2kangee1@gmail.com)
