@@ -9,7 +9,7 @@ import openpyxl
 
 # 환경 변수로 슬랙 토큰을 입력 후 사용해주세요.
 # Counting Bot
-token = 'xoxb-1675602897633-1854874536133-ErNYFCF8jyuDV1qG6DpiSdUl'
+token = 'xoxb-1675602897633-1854874536133-Lb1T96Q8FljVsLrzsa1C021e'
 # Count
 #token = 'xoxb-1675602897633-1875733837124-yUsjP44m7wrrizYbFl0DiTzO'
 
@@ -17,6 +17,8 @@ headers = {"Authorization": 'Bearer ' + token}
 # 커넥션 에러 뜰 경우에만 사용
 #headers = {"user-agent": "크롬 개발자 도구에서 찾으시오."} 
 
+english_table = {"Ireh RYU" : "류이레", "Sujin Kim" : "김수진", "Chimin Ahn" : "안치민", "Jeongyeon Kim" : "김정연", "Daewon Noh" : "노대원", "Ryoo Seojin" : "류서진", "Jueun Lee" : "이주은", "Suryeon Kim" : "김수련", "editor gieun" : "김기은", "Leon Firenze Leem" : "임레온", "KANG HEE LEE" : "이강희", "Rebecca Choi" : "최혜림", "L" : "이유진B", "Ed Chanwoo Kim" : "김찬우", "Soyoung Kim" : "김소영"}
+kor_table = {"류이레" : "Ireh RYE", "김수진" : "Sujin Kim" , "안치민" : "Chimin Ahn" , "김정연" : "Jeongyeon Kim" , "노대원" : "Daewon Noh", "류서진" : "Ryoo Seojin", "이주은" : "Jueun Lee", "김수련" : "Suryeon Kim" , "김기은" : "editor gieun", "임레온" : "Leon Firenze Leem", "이강희" : "KANG HEE LEE", "최혜림" : "Rebecca Choi", "이유진B" : "L", "김찬우" : "Ed Chanwoo Kim", "김소영" : "Soyoung Kim"}
 def filter_channel(channel_list, filter:str = '토요일'):
     channels = list()
     for id in channel_list['name']:
@@ -108,8 +110,8 @@ def merge_excel(term_length):
     for term in range(term_length):
         if term > 1:
             df = load_excel(str(term) + '주차 회고여부')
-            merge_df = pd.concat([merge_df, df])
-    down_excel(merge_df.transpose(), '회고체크')
+            merge_df = pd.concat([merge_df, df], axis = 1)
+    down_excel(merge_df, '회고체크')
 
 # 함수 : make dataframe
 def make_data(channel, oldest, latest):
@@ -149,15 +151,15 @@ def filter_members(members):
 def update_late_submission(user_list, term):
     df = load_excel(str(term-1) + '주차 회고여부')
     for user in user_list:
-        status = str(df[user]['회고록'+str(term-1)+'회'])
+        status = str(df['회고록'+str(term-1)+'회'][user])
         if status == 'L':
             df_before = load_excel(str(term-2) + '주차 회고여부')
-            before_status = str(df[user]['회고록'+str(term-2)+'회'])
+            before_status = str(df['회고록'+str(term-2)+'회'][user])
             if before_status == 'X':
-                df_before[user] = 'L'
+                df_before['회고록'+str(term-2)+'회'][user] = 'L'
             down_excel(df_before, str(term-2) + '주차 회고여부')
         elif status == 'X':
-            df[user] = 'L'
+            df['회고록'+str(term-1)+'회'][user] = 'L'
         else :
             print('bug')
     down_excel(df, str(term-1) + '주차 회고여부')
@@ -172,6 +174,18 @@ def find_late_submission(df, term, users):
     
     return list(set(late_users))
 
+def eng_to_kor(name):
+    for key in english_table:
+        if key == name:
+            name = english_table[key]
+    return name
+
+def kor_to_eng(name):
+    for key in kor_table:
+        if key == name:
+            name = kor_table[key]
+    return name
+
 def count(oldest, latest, term):
     print(str(term) + '주차')
     # 필요한 값 : 찾으려는 채널명, oldest, latest, 엑셀 파일 저장명
@@ -185,33 +199,37 @@ def count(oldest, latest, term):
     sun_channel_list = filter_channel(channel_list, '일요일')
     share_channel_list = filter_channel(channel_list, 'shareonly')
     channels = sat_channel_list + sun_channel_list + share_channel_list
-
+    #channels = filter_channel(channel_list, 'shareonly_a')
     for i in range(len(channels)):
         all_members.extend(get_members(find_channel(channels[i])))
         df = pd.concat([df, make_data(channels[i], oldest, latest)], ignore_index=True)
     all_members = list(set(all_members))
     # 기간 동안 회고 여부와 댓글 수
-    all_members_nick = [changetonick(z) for z in all_members]
+    all_members_nick = [changetonick(member) for member in all_members]
+    all_members_nick = [eng_to_kor(member) for member in all_members_nick]
     # filter 운영진, 봇
     all_members_nick = filter_members(all_members_nick)
     # 회고 쓴 사람
     users = filter_completed(df)
     user_completed = list(set(users))
-    user_completed = filter_members(user_completed) 
+    user_completed = filter_members(user_completed)
+    user_completed = [eng_to_kor(member) for member in user_completed]
 
     # 회고 안 쓴 사람
     user_uncompleted = [j for j in all_members_nick if j not in user_completed]
     
     fin_df = pd.DataFrame(columns = all_members_nick)
+    
     fin_df.loc['회고록' + str(term) + '회'] = 'O'    
     for _ in user_uncompleted:
         fin_df[_]['회고록' + str(term) + '회'] = 'X'
-
+    fin_df = fin_df.transpose()
     # 엑셀파일로 저장
     down_excel(fin_df,str(term) + '주차 회고여부')
     
     late_users = find_late_submission(df, term, users)    
     late_users = filter_members(late_users)
+    late_users = [eng_to_kor(member) for member in late_users]
     if len(late_users) > 0 and term > 1:
         update_late_submission(late_users, term)
 
@@ -235,16 +253,19 @@ if __name__ == "__main__":
      
     term_length = 13
     oldests, latests = find_time(oldest, latest, interval = 7, term_length = term_length)
+    current_term = 5
     i = 0
     for oldest, latest in zip(oldests, latests):
+        if i < current_term -2 :
+            continue
         i = i + 1
         oldest = time.mktime(oldest.timetuple())
         latest = time.mktime(latest.timetuple())
         
         count(oldest, latest, i)
-        if i == 3:
+        if i == current_term:
             break
     
-    merge_excel(i+1)    
+    merge_excel(current_term+1)    
 
     
