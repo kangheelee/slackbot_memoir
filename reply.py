@@ -11,7 +11,7 @@ import openpyxl
 # export SLACK_BOT_TOKEN='xoxb-bla-bla'
 #token = os.environ["SLACK_BOT_TOKEN"]ㅣ
 #token = 'xoxb-1675602897633-1854874536133-YL2aYkdADMLeIhiLNPTD81yi'
-token = 'xoxb-1675602897633-1854874536133-Lb1T96Q8FljVsLrzsa1C021e'
+token = 'xoxb-1675602897633-1854874536133-myMT8wKX6R9l61nDfpWWA6Hh'
 headers = {"Authorization": 'Bearer ' + token}
 # 커넥션 에러 뜰 경우에만 사용
 english_table = {"Ireh RYU" : "류이레", "Sujin Kim" : "김수진", "Chimin Ahn" : "안치민", "Jeongyeon Kim" : "김정연", "Daewon Noh" : "노대원", "Ryoo Seojin" : "류서진", "Jueun Lee" : "이주은", "Suryeon Kim" : "김수련", "editor gieun" : "김기은", "Leon Firenze Leem" : "임레온", "KANG HEE LEE" : "이강희", "Rebecca Choi" : "최혜림", "L" : "이유진B", "Ed Chanwoo Kim" : "김찬우", "Soyoung Kim" : "김소영" }
@@ -97,11 +97,11 @@ def todatetime(ts:str):
 
 # 함수 : download excel file
 def down_excel(dataframe, title):
-    title = title + '.xlsx'
+    title = 'output/' + title + '.xlsx'
     dataframe.to_excel(title, sheet_name = 'sheet1')
 
 def load_excel(title):
-    title = title + '.xlsx'
+    title = 'output/' + title + '.xlsx'
     dataframe = pd.read_excel(title, index_col = 0)
     return dataframe
 
@@ -112,7 +112,7 @@ def merge_excel(term_length, title):
         if term > 1:
             df = load_excel(title + str(term))
             merge_df = pd.concat([merge_df, df])
-    down_excel(merge_df.transpose(), title)
+    down_excel(merge_df.transpose(), title + '_' + str(term_length-1))
 
 # 함수 : make dataframe
 def make_data(channel):
@@ -143,7 +143,6 @@ def filter_members(members):
                 is_real = False
         if is_real:
             real_members.append(member)
-    print('real_members : ', real_members)
     return real_members
 
 def eng_to_kor(name):
@@ -184,7 +183,6 @@ def count(oldest, latest, term):
     reply_list = list(df['reply_users'])
     index0 = list(fin_df.columns)
     index1 = [0 for m in range(len(index0))]
-    print('reply_list :', reply_list)
     for q in reply_list:
         if type(q) == list:
             for p in q:
@@ -226,14 +224,17 @@ if __name__ == "__main__":
     term_length = 3
     oldests, latests = find_time(oldest, latest, interval = 28, length = term_length)
     i = 0
+    current_term = 2
     for oldest, latest in zip(oldests, latests):
- 
         i = i + 1
+        
+        if current_term != i:
+            continue
         oldest = time.mktime(oldest.timetuple())
         latest = time.mktime(latest.timetuple())
+        latest = '0'
         count(oldest, latest, i)
-        if i == 1:
-            break
+
     title = 'reply_count'
     merge_excel(i+1, title)
     title = 'reply'

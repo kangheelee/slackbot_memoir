@@ -9,7 +9,7 @@ import openpyxl
 
 # 환경 변수로 슬랙 토큰을 입력 후 사용해주세요.
 # Counting Bot
-token = 'xoxb-1675602897633-1854874536133-Lb1T96Q8FljVsLrzsa1C021e'
+token = 'xoxb-1675602897633-1854874536133-myMT8wKX6R9l61nDfpWWA6Hh'
 # Count
 #token = 'xoxb-1675602897633-1875733837124-yUsjP44m7wrrizYbFl0DiTzO'
 
@@ -58,7 +58,8 @@ def get_all_messages(channel:str, start_time:str='0', end_time:str=time.time()):
             }
     res = requests.get(URL, params = params, headers=headers)
     conversations = json_normalize(res.json()['messages'])
-    return conversations[['ts','user','text','type','reply_users']]
+    #return conversations[['ts','user','text','type','reply_users']]
+    return conversations[['ts','user','text','type']]
 
 # 함수 : user id -> user nickname
 # Bug 누락되는 이름 발생
@@ -96,11 +97,11 @@ def todatetime(ts:str):
 
 # 함수 : download excel file
 def down_excel(dataframe, title):
-    title = title + '.xlsx'
+    title = 'output/' + title + '.xlsx'
     dataframe.to_excel(title, sheet_name = 'sheet1')
 
 def load_excel(title):
-    title = title + '.xlsx'
+    title = 'output/' + title + '.xlsx'
     dataframe = pd.read_excel(title, index_col = 0)
     return dataframe
     
@@ -111,7 +112,7 @@ def merge_excel(term_length):
         if term > 1:
             df = load_excel(str(term) + '주차 회고여부')
             merge_df = pd.concat([merge_df, df], axis = 1)
-    down_excel(merge_df, '회고체크')
+    down_excel(merge_df, '회고체크'+ '_'+ str(term_length-1))
 
 # 함수 : make dataframe
 def make_data(channel, oldest, latest):
@@ -152,12 +153,14 @@ def update_late_submission(user_list, term):
     df = load_excel(str(term-1) + '주차 회고여부')
     for user in user_list:
         status = str(df['회고록'+str(term-1)+'회'][user])
-        if status == 'L':
+        if status == 'O':
             df_before = load_excel(str(term-2) + '주차 회고여부')
-            before_status = str(df['회고록'+str(term-2)+'회'][user])
+            before_status = str(df_before['회고록'+str(term-2)+'회'][user])
             if before_status == 'X':
                 df_before['회고록'+str(term-2)+'회'][user] = 'L'
-            down_excel(df_before, str(term-2) + '주차 회고여부')
+                df['회고록'+str(term-1)+'회'][user] = 'L'
+                down_excel(df_before, str(term-2) + '주차 회고여부')
+                
         elif status == 'X':
             df['회고록'+str(term-1)+'회'][user] = 'L'
         else :
@@ -192,8 +195,8 @@ def count(oldest, latest, term):
     # 자동화 시작
     all_members = []
     # label
-    df = pd.DataFrame(columns = ['date' , 'user', 'text', 'type', 'reply_users'])
-    
+    #df = pd.DataFrame(columns = ['date' , 'user', 'text', 'type', 'reply_users'])
+    df = pd.DataFrame(columns = ['date' , 'user', 'text', 'type'])
     channel_list = get_all_channel().to_dict()
     sat_channel_list = filter_channel(channel_list, '토요일')
     sun_channel_list = filter_channel(channel_list, '일요일')
@@ -253,12 +256,13 @@ if __name__ == "__main__":
      
     term_length = 13
     oldests, latests = find_time(oldest, latest, interval = 7, term_length = term_length)
-    current_term = 5
+    current_term = 8
     i = 0
     for oldest, latest in zip(oldests, latests):
-        if i < current_term -2 :
-            continue
         i = i + 1
+        if i < current_term:
+            continue
+        
         oldest = time.mktime(oldest.timetuple())
         latest = time.mktime(latest.timetuple())
         
